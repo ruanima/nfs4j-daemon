@@ -198,9 +198,13 @@ public abstract class AbstractNioFileSystem<A extends BasicFileAttributes> imple
     @Override
     public Inode lookup(Inode parent, String path) throws IOException {
         Path parentPath = handleRegistry.toPath(parent);
+        Path child = parentPath.resolve(path).normalize();
 
         try {
-            Path child = parentPath.resolve(path).normalize();
+            Path origin = handleRegistry.getOriginPath(handleRegistry.toNormalizeNFD(child.toString()));
+            if (origin != null) {
+                child = origin;
+            }
             return toInode(handleRegistry.toFileHandle(child));
         } catch (InvalidPathException e) {
             throw new BadNameException(path);

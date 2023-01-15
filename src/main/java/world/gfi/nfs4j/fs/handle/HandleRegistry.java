@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.text.Normalizer;
 
 /**
  * Bidirectionnal mapping of Path to/from File Handle.
@@ -21,9 +22,18 @@ public abstract class HandleRegistry<P> {
 
     private final NonBlockingHashMapLong<P> fileHandleToPath = new NonBlockingHashMapLong<>();
     private final NonBlockingHashMap<P, Long> pathToFileHandle = new NonBlockingHashMap<>();
+    private final NonBlockingHashMap<String, P> unicodeNFDToOrigin = new NonBlockingHashMap();
     private final UniqueHandleGenerator uniqueLongGenerator;
     private HandleRegistryListener<P> listener;
     private int fsIndex;
+
+    public String toNormalizeNFD(String path) {
+        return Normalizer.normalize(path, Normalizer.Form.NFD);
+    }
+
+    public P getOriginPath(String nfd) {
+        return unicodeNFDToOrigin.get(nfd);
+    }
 
     public void setListener(HandleRegistryListener<P> listener) {
         this.listener = listener;
@@ -63,6 +73,10 @@ public abstract class HandleRegistry<P> {
         boolean exists = pathExists(path);
         if (exists && createIfPathExists && fileHandle == null) {
             fileHandle = this.add(path);
+            String nfd = toNormalizeNFD(path.toString());
+            if (nfd != path.toString()) {
+                unicodeNFDToOrigin.put(nfd, path);
+            }
         } else if (!exists && fileHandle != null) {
             this.remove(path);
         }
