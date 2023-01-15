@@ -24,6 +24,7 @@ import world.gfi.nfs4j.fs.handle.PathHandleRegistry;
 import world.gfi.nfs4j.fs.handle.UniqueHandleGenerator;
 import world.gfi.nfs4j.fs.io.FileSystemReaderWriter;
 import world.gfi.nfs4j.fs.permission.PermissionsMapper;
+import world.gfi.nfs4j.utils.FileNameSanitizer;
 
 import javax.security.auth.Subject;
 import java.io.File;
@@ -201,7 +202,7 @@ public abstract class AbstractNioFileSystem<A extends BasicFileAttributes> imple
         Path child = parentPath.resolve(path).normalize();
 
         try {
-            Path origin = handleRegistry.getOriginPath(handleRegistry.toNormalizeNFD(child.toString()));
+            Path origin = handleRegistry.getOriginPath(FileNameSanitizer.toNormalizeNFD(child.toString()));
             if (origin != null) {
                 child = origin;
             }

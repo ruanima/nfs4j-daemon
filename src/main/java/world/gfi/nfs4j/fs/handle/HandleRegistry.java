@@ -8,9 +8,9 @@ import org.dcache.nfs.status.StaleException;
 import org.dcache.nfs.vfs.Inode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import world.gfi.nfs4j.utils.FileNameSanitizer;
 
 import java.io.IOException;
-import java.text.Normalizer;
 
 /**
  * Bidirectionnal mapping of Path to/from File Handle.
@@ -26,10 +26,6 @@ public abstract class HandleRegistry<P> {
     private final UniqueHandleGenerator uniqueLongGenerator;
     private HandleRegistryListener<P> listener;
     private int fsIndex;
-
-    public String toNormalizeNFD(String path) {
-        return Normalizer.normalize(path, Normalizer.Form.NFD);
-    }
 
     public P getOriginPath(String nfd) {
         return unicodeNFDToOrigin.get(nfd);
@@ -73,7 +69,7 @@ public abstract class HandleRegistry<P> {
         boolean exists = pathExists(path);
         if (exists && createIfPathExists && fileHandle == null) {
             fileHandle = this.add(path);
-            String nfd = toNormalizeNFD(path.toString());
+            String nfd = FileNameSanitizer.toNormalizeNFD(path.toString());
             if (nfd != path.toString()) {
                 unicodeNFDToOrigin.put(nfd, path);
             }

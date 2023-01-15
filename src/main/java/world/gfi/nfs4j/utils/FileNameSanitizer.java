@@ -1,5 +1,6 @@
 package world.gfi.nfs4j.utils;
 
+import java.text.Normalizer;
 import java.util.Arrays;
 
 public class FileNameSanitizer {
@@ -21,5 +22,9 @@ public class FileNameSanitizer {
             }
         }
         return cleanName.toString();
+    }
+
+    public static String toNormalizeNFD(String path) {
+        return Normalizer.normalize(path, Normalizer.Form.NFD);
     }
 }
