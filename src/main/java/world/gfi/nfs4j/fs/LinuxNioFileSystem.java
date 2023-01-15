@@ -33,17 +33,20 @@ public class LinuxNioFileSystem extends AbstractNioFileSystem<PosixFileAttribute
 
     @Override
     protected PosixFileAttributes getFileAttributes(Path path) throws IOException {
+        path = handleRegistry.getNFDOrigin(path);
         return Files.getFileAttributeView(path, PosixFileAttributeView.class, NOFOLLOW_LINKS).readAttributes();
     }
 
     @Override
     protected void applyFileAttributesToStat(Stat stat, Path path, PosixFileAttributes attrs) throws IOException {
+        path = handleRegistry.getNFDOrigin(path);
         super.applyFileAttributesToStat(stat, path, attrs);
         stat.setNlink((Integer) Files.getAttribute(path, "unix:nlink", NOFOLLOW_LINKS));
     }
 
     @Override
     protected void applyStatToPath(Stat stat, Path path) throws IOException {
+        path = handleRegistry.getNFDOrigin(path);
         super.applyStatToPath(stat, path);
 
         PosixFileAttributeView attributeView = Files.getFileAttributeView(path, PosixFileAttributeView.class, NOFOLLOW_LINKS);

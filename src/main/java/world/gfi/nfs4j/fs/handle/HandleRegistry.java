@@ -27,8 +27,22 @@ public abstract class HandleRegistry<P> {
     private HandleRegistryListener<P> listener;
     private int fsIndex;
 
-    public P getOriginPath(String nfd) {
-        return unicodeNFDToOrigin.get(nfd);
+    public P getNFDOrigin(String nfd, P defaultVal) {
+        return unicodeNFDToOrigin.getOrDefault(FileNameSanitizer.toNormalizeNFD(nfd), defaultVal);
+    }
+
+    public P getNFDOrigin(P path) {
+        return this.getNFDOrigin(path.toString(), path);
+    }
+
+    public String setNFDOriginIfNeed(P origin) {
+        String s = origin.toString();
+        String nfd = FileNameSanitizer.toNormalizeNFD(s);
+        if (s != nfd) {
+            unicodeNFDToOrigin.put(nfd, origin);
+            return nfd;
+        }
+        return null;
     }
 
     public void setListener(HandleRegistryListener<P> listener) {
@@ -65,16 +79,15 @@ public abstract class HandleRegistry<P> {
     }
 
     private long toFileHandle(P path, boolean createIfPathExists) throws NoEntException {
+        path = getNFDOrigin(path.toString(), path);
         Long fileHandle = pathToFileHandle.get(path);
         boolean exists = pathExists(path);
         if (exists && createIfPathExists && fileHandle == null) {
             fileHandle = this.add(path);
-            String nfd = FileNameSanitizer.toNormalizeNFD(path.toString());
-            if (nfd != path.toString()) {
-                unicodeNFDToOrigin.put(nfd, path);
-            }
+            setNFDOriginIfNeed(path);
         } else if (!exists && fileHandle != null) {
             this.remove(path);
+            this.unicodeNFDToOrigin.remove(FileNameSanitizer.toNormalizeNFD(path.toString()));
         }
         if (!exists) {
             throw new NoEntException(path.toString());

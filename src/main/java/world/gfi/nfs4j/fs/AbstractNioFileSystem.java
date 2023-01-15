@@ -116,6 +116,7 @@ public abstract class AbstractNioFileSystem<A extends BasicFileAttributes> imple
     }
 
     protected void applyStatToPath(Stat stat, Path path) throws IOException {
+        path = handleRegistry.getNFDOrigin(path);
         if (stat.isDefined(Stat.StatAttribute.SIZE)) {
             try (RandomAccessFile raf = new RandomAccessFile(path.toFile(), "rw")) {
                 raf.setLength(stat.getSize());
@@ -199,13 +200,10 @@ public abstract class AbstractNioFileSystem<A extends BasicFileAttributes> imple
     @Override
     public Inode lookup(Inode parent, String path) throws IOException {
         Path parentPath = handleRegistry.toPath(parent);
-        Path child = parentPath.resolve(path).normalize();
 
         try {
-            Path origin = handleRegistry.getOriginPath(FileNameSanitizer.toNormalizeNFD(child.toString()));
-            if (origin != null) {
-                child = origin;
-            }
+            Path child = parentPath.resolve(path).normalize();
+            child = handleRegistry.getNFDOrigin(child);
             return toInode(handleRegistry.toFileHandle(child));
         } catch (InvalidPathException e) {
             throw new BadNameException(path);
@@ -308,6 +306,7 @@ public abstract class AbstractNioFileSystem<A extends BasicFileAttributes> imple
         Path destPath = handleRegistry.toPath(dest);
 
         Path currentPath = currentParentPath.resolve(oldName).normalize();
+        currentPath = handleRegistry.getNFDOrigin(currentPath);
         Path newPath = destPath.resolve(newName).normalize();
 
         if (destPath.equals(newPath)) {
@@ -338,6 +337,7 @@ public abstract class AbstractNioFileSystem<A extends BasicFileAttributes> imple
     }
 
     protected String readlinkFromPath(Path path) throws IOException {
+        path = handleRegistry.getNFDOrigin(path);
         String linkData = Files.readSymbolicLink(path).normalize().toString();
         if (File.separatorChar != '/') {
             linkData = linkData.replace(File.separatorChar, '/');
@@ -348,6 +348,7 @@ public abstract class AbstractNioFileSystem<A extends BasicFileAttributes> imple
     private void recycle(Inode parent, String path) throws IOException {
         Inode recycleInode = this.getRecycleInode();
         Path currentPath = handleRegistry.toPath(parent).resolve(path).normalize();
+        currentPath = handleRegistry.getNFDOrigin(currentPath);
         Path newPath = handleRegistry.toPath(recycleInode).resolve(path).normalize();
         if (Files.exists(newPath)) {
             long unixTime = System.currentTimeMillis() / 1000L;
@@ -360,6 +361,7 @@ public abstract class AbstractNioFileSystem<A extends BasicFileAttributes> imple
     public void remove(Inode parent, String path) throws IOException {
         Path parentPath = handleRegistry.toPath(parent);
         Path targetPath = parentPath.resolve(path).normalize();
+        targetPath = handleRegistry.getNFDOrigin(targetPath);
         if (this.recycleEnabled && !path.startsWith(".")) {
             this.recycle(parent, path);
             handleRegistry.remove(targetPath);
@@ -384,6 +386,7 @@ public abstract class AbstractNioFileSystem<A extends BasicFileAttributes> imple
         if (!targetName.startsWith("/")) {
             target = parentPath.relativize(target);
         }
+        target = handleRegistry.getNFDOrigin(target);
 
         try {
             Files.createSymbolicLink(link, target);
@@ -418,6 +421,7 @@ public abstract class AbstractNioFileSystem<A extends BasicFileAttributes> imple
 
     protected Stat getStat(Path p) throws IOException {
         try {
+            p = handleRegistry.getNFDOrigin(p);
             A attrs = getFileAttributes(p);
             Stat stat = new Stat();
             applyFileAttributesToStat(stat, p, attrs);

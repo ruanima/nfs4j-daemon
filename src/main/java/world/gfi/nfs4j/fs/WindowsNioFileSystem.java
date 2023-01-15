@@ -27,11 +27,13 @@ public class WindowsNioFileSystem extends AbstractNioFileSystem<DosFileAttribute
 
     @Override
     protected DosFileAttributes getFileAttributes(Path path) throws IOException {
+        path = handleRegistry.getNFDOrigin(path);
         return Files.getFileAttributeView(path, DosFileAttributeView.class, NOFOLLOW_LINKS).readAttributes();
     }
 
     @Override
     protected void applyFileAttributesToStat(Stat stat, Path path, DosFileAttributes attrs) throws IOException {
+        path = handleRegistry.getNFDOrigin(path);
         super.applyFileAttributesToStat(stat, path, attrs);
         stat.setNlink(1);
 
