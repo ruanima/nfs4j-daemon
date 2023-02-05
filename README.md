@@ -20,7 +20,7 @@ available at [gfi-centre-ouest/vagrant-nfs4j](https://github.com/gfi-centre-oues
 
 ## Quickstart
 
-- Download latest binaries from [Github Releases](https://github.com/ruanima/nfs4j-daemon/releases).
+- Download latest binaries from [Github Releases](https://github.com/ruanimal/nfs4j-daemon/releases).
 - Download and install JRE11 from [adoptium.net](https://adoptium.net/zh-CN/temurin/archive/?version=11)
 - Run `nfs4j-daemon`. With default options, it will publish the current working directory through NFS.
 
